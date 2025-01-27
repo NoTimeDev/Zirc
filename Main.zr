@@ -1,0 +1,13 @@
+?Target = "linux-x86_64"
+
+def @main() : i64 {
+    $Num1 = add i1 0, 1 
+    $Num2 = add i8 1, 1
+    $Num3 = add i16 3, 4
+    $Num4 = add i32 1, 1
+    $Num5 = add i64 3, 4
+
+    
+    $LoadedNum5 = load i64, $Num5
+    ret $Num5
+}
