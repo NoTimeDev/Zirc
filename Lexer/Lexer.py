@@ -77,7 +77,6 @@ class Lexer:
                         "def" : TokenKind.Def,
                         "load" : TokenKind.Load,
 
-                        "i1" : TokenKind.Types,
                         "i8" : TokenKind.Types,
                         "i16" : TokenKind.Types,
                         "i32" : TokenKind.Types,

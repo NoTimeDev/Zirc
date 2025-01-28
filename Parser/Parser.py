@@ -9,7 +9,6 @@ class Parser:
         self.VarsTypes: dict = {}
     
         self.Ast = {
-            "Target" : "",
             "Body" : []
         }
     def CToken(self) -> Token:
@@ -32,16 +31,6 @@ class Parser:
             return self.Adv()
 
     def GetAst(self):
-        if self.CToken().Kind != TokenKind.Meta_Data or self.CToken().Value != "?Target":
-            print("Error: The first part of a program must include the target", file=sys.stderr)
-            exit(1)
-        else: 
-            self.Adv()
-            self.Expect(TokenKind.Equal, "=")
-            Target = self.Expect(TokenKind.Strings, "a target")
-            
-            self.Ast['Target'] = Target.Value
-
         while len(self.Tokens) > self.Pos:
             if self.CToken().Kind == TokenKind.EOF:
                 break 
@@ -82,12 +71,15 @@ class Parser:
         Type = self.ParseType()
         self.Expect(TokenKind.Comma, ',')
 
-        ToLoad = self.Parse()
+        ToLoad = self.Adv()
+        New =  self.Expect(TokenKind.Variables, "a var name").Value 
+        self.VarsTypes.update({New : Type})
 
         return {
             "Kind" : "Load inst",
             "Type" : Type,
-            "Loading" : ToLoad,
+            "Loading" : ToLoad.Value,
+            "NewName" : New
         }
     def cmptypes(self, t1, t2):
         if t1 == "int" and t2 in ["i64", "i32", "i16", "i8", "i1"]:
@@ -174,8 +166,8 @@ class Parser:
 
             Node = self.Parse()
             
-            self.VarsTypes.update({tk.Value : Node.get("Type").get("Type")})
 
+            self.VarsTypes.update({tk.Value : Node.get("Type").get("Type")})
             return {
                 "Kind" : "TempVariable",
                 "Type" : Node.get("Type"),
