@@ -1,10 +1,10 @@
-default rel
-bits 64
-section .data
+section .data  
 section .text
-    extern _exit
+    global main 
+    extern exit
+    default rel
 
-	main:
+main:
 	push rbp
 	mov rbp, rsp
 	sub rsp, 16
@@ -28,4 +28,9 @@ section .text
 	add rax, rcx
 	
     mov rsp, rbp
-	pop ebp
+	pop rbp
+
+    mov rdi, 8 
+    call exit wrt ..plt
+    ret
+
