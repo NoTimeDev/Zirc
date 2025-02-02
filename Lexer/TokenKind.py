@@ -6,6 +6,9 @@ class TokenKind(Enum):
     Ret = auto()
     Def = auto()
     Load = auto()
+    To = auto()
+    Sext = auto()
+    Zext = auto()
 
     #variables
     Meta_Data = auto()
@@ -32,6 +35,9 @@ class TokenKind(Enum):
     Cl_c_brack = auto()
     
     EOF = auto()
+    
+    Pointarr = auto()
+
 class Token:
     def __init__(self, kind: TokenKind, Line: int, Start: int, Value: str):
         self.Line: int = Line 

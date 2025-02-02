@@ -1,0 +1,14 @@
+def @main() : i64 {
+    $Num5 = add i64 3, 4
+    $Num6 = add i64 4, 5
+    $Num7 = add i64 5, 6
+    
+    load i64, $Num5 -> $LoadedNum5
+    $Num8 = add i64 5, $LoadedNum5
+    
+    load i64, $Num8 -> $LoadedNum8 
+
+    $Num2 = add i64 4, $LoadedNum8
+    
+    ret $LoadedNum8
+}

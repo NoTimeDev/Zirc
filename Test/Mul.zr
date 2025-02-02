@@ -1,0 +1,3 @@
+def @main() : i8{
+    ret 2
+}

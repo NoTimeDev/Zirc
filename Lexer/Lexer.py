@@ -1,12 +1,12 @@
 import sys
+
 from .TokenKind import *
 
 
 class Lexer:
     def __init__(self, Code: str):
         self.Code: str = Code
-        self.FunctionList: list[str] = []
-
+        self.Meta: dict = {"Funcs" : [], "Vars" : [], "Labels" : [], "VarsCalled" : {}}
     def Lex(self):
         Tokens: list[Token] = []
 
@@ -35,6 +35,23 @@ class Lexer:
                     Coloum+=1
                 Pos+=1
                 Coloum+=1
+            
+            elif cchar == '-' and self.Code[Pos + 1] == ">":
+                Add(Coloum, Line, TokenKind.Pointarr, "->")
+                Pos+=2; Coloum+=2
+            elif cchar == "-" and self.Code[Pos + 1].isdigit():
+                Start: int = Coloum
+                Var: str = "-"
+                Pos+=1; Coloum+=1 
+                while self.Code[Pos].isdigit() or self.Code[Pos] == ".":
+                        Var+=self.Code[Pos]
+                        Pos+=1; Coloum+=1 
+                    
+                if Var.count(".") == 1:
+                    Add(Start, Line, TokenKind.Float, Var)
+                else:
+                    Add(Start, Line, TokenKind.Number, Var)
+
 
             elif cchar == ":":
                 Add(Coloum, Line, TokenKind.Colon, ":")
@@ -76,6 +93,9 @@ class Lexer:
                         "ret" : TokenKind.Ret,
                         "def" : TokenKind.Def,
                         "load" : TokenKind.Load,
+                        "to" : TokenKind.To,
+                        "sext" : TokenKind.Sext,
+                        "zext" : TokenKind.Zext, 
 
                         "i8" : TokenKind.Types,
                         "i16" : TokenKind.Types,
@@ -94,6 +114,11 @@ class Lexer:
                         Var+=self.Code[Pos]
                         Pos+=1; Coloum+=1 
                     Add(Start, Line, TokenKind.Variables, Var)
+                    self.Meta["Vars"].append(Var)
+                    if self.Meta["VarsCalled"].get(Var) == None:
+                        self.Meta["VarsCalled"].update({Var : 0})
+                    else:
+                        self.Meta["VarsCalled"][Var]+=1 
                 elif cchar == "@":
                     Start: int = Coloum
                     Var: str = "@"
@@ -103,7 +128,8 @@ class Lexer:
                         Var+=self.Code[Pos]
                         Pos+=1; Coloum+=1 
                     Add(Start, Line, TokenKind.Functions, Var)
-                    self.FunctionList.append(Var)
+                    self.Meta["Funcs"].append(Var)
+
                 elif cchar == "?":
                     Start: int = Coloum
                     Var: str = ""

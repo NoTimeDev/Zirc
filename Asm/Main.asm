@@ -1,8 +1,15 @@
+default rel
+bits 64
+
 section .data  
+
+
+;section .externs
+extern _exit 
+
+
 section .text
     global main 
-    extern exit
-    default rel
 
 main:
 	push rbp
@@ -31,6 +38,6 @@ main:
 	pop rbp
 
     mov rdi, 8 
-    call exit wrt ..plt
+    call _exit wrt ..plt
     ret
 

@@ -1,0 +1,11 @@
+def @main() : i64 {   
+     $1 = add i32 5, 5
+     $2 = add i32 5, 5
+     $3 = add i32 5, 5
+     $4 = add i32 5, 5
+     $5 = add i32 5, 5
+        
+     zext $1 to i64 -> i32
+        
+     ret $1
+}
