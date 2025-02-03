@@ -1,8 +1,6 @@
-def @main() : i32 {   
-     
-    $1 = fadd f32 4.5, 5.5
-    ftui f32 to i32, $1 -> $f1
-
-    load i32, $f1 -> $lf1 
-    ret $lf1
+def @main() : i8 {
+  $Var1 = add i32 9, 3
+  trunc $Var1 to i8 -> i32
+  load i8, $Var1 -> $lVar1
+  ret $lVar1
 }
