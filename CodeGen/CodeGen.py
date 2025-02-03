@@ -1,19 +1,29 @@
 import platform
 Sys_Os = platform.system()
 
+def advanceto16(num):
+    if num == 0:
+        return 16
+    while num % 16 != 0:
+        num+=1 
+    return num
+
 class CodeGen:
     def __init__(self, Ast: list[dict]):
         self.Ast: list[dict] = Ast
                 
         self.Pos: int = 0
         
+        self.floatcount: int = 0 
+
         self.ExternalFunc: list[str] = []
         
         if Sys_Os == "Linux":
             self.Headers: list[str] = [";Zirc on: Linux", ";Zed Compiler Project", "default rel", "bits 64"]
         elif Sys_Os == "Windows":
             self.Headers: list[str] = [";Zirc on: Windows", "\n;Zed Compiler Project", "default rel", "bits 64"]
-            
+       
+        self.RoData: list[str] = ["section .rodata"]
         self.Data: list[str] = ["section .data"]
         self.Extern: list[str] = [";section .extern"]
         self.Text: list[str] = ["section .text"]
@@ -21,18 +31,23 @@ class CodeGen:
         self.Body: list[str] = []
             
         self.Comment: str = ""
-        self.NumSize: str = "i64"
+        self.NumSize: str = "i32"
+        self.FloatSize: str = "f32"
 
         self.Di: int = 0
         self.Hi: int = 0
         self.Ti: int = 0
         self.Bi: int = 0
         self.Ei: int = 0
+        self.Rdi: int = 0
             
         self.AllocSpace: int = 0
    
         self.Temporay_Vars: dict = {}
-        
+            
+        self.FReg: list[str] = ["xmm0", "xmm1", "xmm2"] 
+        self.UFReg: list[str] = []
+
         self.Reg64: list[str] = ["rcx", "rbx", "rax", "rdi"]
         self.Reg32: list[str] = ["ecx", "ebx", "eax", "edi"]
         self.Reg16: list[str] = ["cx", "bx", "ax", "di"]
@@ -46,9 +61,8 @@ class CodeGen:
         self.RegMap = {
             "1" : ['rcx','ecx', 'cx', "cl"],
             "2" : ['rbx', 'ebx', 'bx', "bl"],
-            "3" : ['rax', 'eax', 'ax', "bl"],
+            "3" : ['rax', 'eax', 'ax', "al"],
             "4" : ["rdi", "edi", "di", "dil"]
-
         }
         
         self.MapTypeToSize = {
@@ -57,9 +71,19 @@ class CodeGen:
             "i16" : "word",
             "i8" : "byte"
         }
+
         self.InMain = False 
         self.InMainSize = ""
         self.Loc = 0
+
+        self.IsInt = False
+        self.IsFloat = False
+
+    def OutRData(self, info: str):
+        if self.Comment != "":
+            self.RoData.append("\t" * self.Di + self.Comment); self.Comment = ""
+        self.RoData.append("\t" * self.Rdi + info)
+
     def OutData(self, info: str):
         if self.Comment != "":
             self.Data.append("\t" * self.Di + self.Comment); self.Comment = ""
@@ -111,9 +135,207 @@ class CodeGen:
                 return self.GenSext(Node)
             case "Zext-inst":
                 return self.GenZext(Node)
+            case "Trunc-inst":
+                return self.GenTrunc(Node)
+            case "Fadd-Inst":
+                return self.GenFadd(Node)
+            case "Float":
+                return self.GenFloat(Node)
+            case "Fl-to-uint":
+                return self.GenFlToUint(Node) 
             case _:
                 print(f"I Dont Support {Node.get("Kind")}")
-    
+
+    def GenFlToUint(self, Node):
+        TempVar = self.Temporay_Vars.get(Node.get("OgName"))
+        
+        if TempVar["Register"][0] != "[":
+            poses = { "i64" : 0, "i32" : 1, "i16" : 2, "i8" : 3 }
+
+            Reg = self.GetReg("8")
+
+            self.OutBody(f"cvttss2si {Reg}, {TempVar["Register"]}")
+            
+            self.GiveFlReg(TempVar["Register"])
+            RegInfo = self.GetPosMap(Reg)
+            RReg = RegInfo[poses[Node.get("Type")[0]]]
+
+            self.Temporay_Vars.update({Node.get("NewName"): {
+                "Register" : RReg,
+                "Type" : Node.get("Type"),
+                "Size" : self.GetSizeForReg(RReg),
+                "Should_Load" : TempVar.get("Should_Load"),
+                "IsFloat" : True,
+                "IsInt" : False
+            }})
+            
+        else:
+            fReg = self.GetFlReg()
+
+            if Node.get("Size") == "4":
+                self.OutBody(f"movss {fReg}, {TempVar.get("Register")}")
+            elif Node.get("Size") == "8":
+                self.OutBody(f"movsd {fReg}, {TempVar.get("Register")}")
+
+            Reg = self.GetReg("8")
+
+            
+            poses = { "i64" : 0, "i32" : 1, "i16" : 2, "i8" : 3 }
+            self.OutBody(f"cvttss2si {Reg}, {fReg}")
+            
+            self.GiveFlReg(fReg)
+            RegInfo = self.GetPosMap(Reg)
+        
+            RReg = RegInfo[poses[Node.get("Type")[0]]]
+
+            self.Temporay_Vars.update({Node.get("NewName"): {
+                "Register" : RReg,
+                "Type" : Node.get("Type"),
+                "Size" : self.GetSizeForReg(RReg),
+                "Should_Load" : TempVar.get("Should_Load"),
+                "IsFloat" : True,
+                "IsInt" : False
+            }})
+            
+
+    def GiveFlReg(self, Reg):
+        self.FReg.append(self.UFReg.pop(self.UFReg.index(Reg)))
+
+    def GetFlReg(self):
+        Name: str = ""
+        Register: str = ""
+        TempVar: str = ""
+
+        if len(self.FReg) == 0:
+            for i in list(self.Temporay_Vars.keys()):
+                if self.Temporay_Vars.get(i).get("Register")[0] != "[":
+                    Name = i 
+                    Register = self.Temporay_Vars.get(i).get("Register")
+                    TempVar = self.Temporay_Vars.get(i)
+                    break 
+                
+                if Register != "":
+                    break
+            
+            
+
+            self.AllocSpace+=int(TempVar.get('Size'))
+            
+            if TempVar.get("Size") == "8":
+                self.OutBody(f"movsd [rbp-{self.AllocSpace}], {Register}")
+            elif TempVar.get("Size") == "4":
+                self.OutBody(f"movss [rbp-{self.AllocSpace}], {Register}")
+            #print(Name, f"[rbp-{self.AllocSpace}]")
+            self.GiveFlReg(Register)
+            self.Temporay_Vars.update({Name : {
+                "Register" : f"[rbp-{self.AllocSpace}]",
+                "Type" : TempVar.get("Type"),
+                "Size" : TempVar.get("Size"),
+                "Should_Load" : TempVar.get("Should_Load"),
+                "IsInt" : False,
+                "IsFloat" : True
+            }})
+            
+            return Register
+
+        else:
+            reg = self.FReg.pop(0)
+            self.UFReg.append(reg) 
+            
+            Moved = ""
+            for i in list(self.Temporay_Vars.keys()):
+                if self.Temporay_Vars.get(i).get("Register") == reg:
+                    if Moved == "":
+                        self.AllocSpace+=int(self.Temporay_Vars.get("Size"))
+                        if self.Temporay_Vars.get("Size") == "4":
+                            self.OutBody(f"movss [rbp-{self.AllocSpace}], {reg}")
+                        else:
+                            self.OutBody(f"movsd [rbp-{self.AllocSpace}], {reg}") 
+                        Moved = f"[rbp-{self.AllocSpace}]"
+                    TempVar = self.Temporay_Vars.get(i)
+                    self.Temporay_Vars.update({i : {
+                        "Register" : Moved,
+                        "Type" : TempVar.get("Type"),
+                        "Size" : TempVar.get("Size"),
+                        "Should_Load" : TempVar.get("Should_Load"),
+                        "IsInt" : False,
+                        "IsFloat" : True 
+                    }})
+
+            
+            return reg 
+
+    def GenFloat(self, Node):
+        self.IsFloat = True
+        self.IsInt = False
+
+        self.Rdi+=1 
+        reg = self.GetFlReg()
+
+        if self.FloatSize == "f64":
+            self.OutRData(f"fl{self.floatcount} dq {Node.get("Value")}")
+            self.OutBody(f"movsd {reg}, [fl{self.floatcount}]")
+            self.floatcount+=1 
+        elif self.FloatSize == "f32":
+            self.OutRData(f"fl{self.floatcount} dd {Node.get("Value")}")
+            self.OutBody(f"movss {reg}, [fl{self.floatcount}]")
+            self.floatcount+=1
+
+        self.Rdi-=1 
+        return reg
+
+    def GenFadd(self, Node):
+        self.IsInt = False
+        self.IsFloat = True
+
+        self.FloatSize = Node.get("Type")[0]
+        Op1 = self.Gen(Node.get("Op1"))
+        Op2 = self.Gen(Node.get("Op2"))
+        
+        if Node.get("Type")[0] == "f32":
+            self.OutBody(f"addss {Op1}, {Op2}")
+        elif Node.get("Type")[0] == "f64":
+            self.OutBody(f"addsd {Op1}, {Op2}")
+
+        return Op1 
+    def GenTrunc(self, Node):
+        TempVar = self.Temporay_Vars.get(Node.get("Extending"))
+
+        poses = { "i64" : 0, "i32" : 1, "i16" : 2, "i8" : 3 }
+        if TempVar.get("Register")[0] != "[":    
+            RegInfo = self.GetPosMap(TempVar["Register"])
+            
+            Reg = RegInfo[poses[Node.get("Type")[0]]]
+            
+            self.Temporay_Vars.update({Node.get("Extending"): {
+                "Register" : Reg,
+                "Type" : Node.get("Type"),
+                "Size" : self.GetSizeForReg(Reg),
+                "Should_Load" : TempVar.get("Should_Load")
+            }})
+        elif TempVar.get("Register")[0] == "[":
+            Reg = self.GetReg(self.RetSizeForType(Node.get("From")[0]))
+            RegInfo = self.GetPosMap(Reg)
+            
+
+            self.OutBody(f"mov {Reg}, {TempVar.get("Register")}")
+            self.Temporay_Vars.update({Node.get("Extending"): {
+                "Register" :  RegInfo[poses[Node.get("Type")[0]]],
+                "Type" : Node.get("Type"),
+                "Size" : self.GetSizeForReg(Reg),
+                "Should_Load" : TempVar.get("Should_Load")
+            }})
+
+    def RetTypeForSize(self, Size):
+        if Size == "1":
+            return "i8"
+        elif Size == "2":
+            return "i16"
+        elif Size == "4":
+            return "i32"
+        elif Size == "8":
+            return "i64"
+
     def RetSizeForType(self, Type):
         if Type == "i8":
             return "1"
@@ -128,10 +350,11 @@ class CodeGen:
         TempVar = self.Temporay_Vars.get(Node.get("Extending"))
         
         if TempVar["Register"][0] != "[":
-            RegInfo = self.GetPosMap(TempVar["Register"])
         
-            poses = { "i64" : 0, "i32" : 1, "i16" : 2, "i8" : 3 }
+            RegInfo = self.GetPosMap(TempVar["Register"])
 
+            poses = { "i64" : 0, "i32" : 1, "i16" : 2, "i8" : 3 }
+            
             ExtendingReg = RegInfo[poses.get(Node.get("Type")[0])]
             if Node.get("Type")[0] == "i64" and Node.get("From")[0] == "i32" or Node.get("Type")[0] == "i32" and Node.get("From")[0] == "i64":
                 self.OutBody(f"movsxd {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
@@ -271,12 +494,8 @@ class CodeGen:
                 Returning = self.Gen(Node.get("Return"))
                 self.EnsureFreeReg("rdi", 8)
             
-                self.OutBody("mov rsp, rbp")
-                self.OutBody("pop rbp")
-                self.Body[self.Loc] = self.Bi  * "\t" + f"sub rsp, {self.AllocSpace}"
-
-  
-            
+        
+                self.OutBody("xor rdi, rdi")
                 if self.InMainSize == "i64":
                     self.OutBody(f"mov rdi, {Returning}")
                 elif self.InMainSize == "i32":
@@ -285,8 +504,12 @@ class CodeGen:
                     self.OutBody(f"mov di, {Returning}")
                 elif self.InMainSize == "i8":
                     self.OutBody(f"mov dil, {Returning}")
+        
+                self.OutBody("mov rsp, rbp")
+                self.OutBody("pop rbp")
+                self.Body[self.Loc] = self.Bi  * "\t" + f"sub rsp, {advanceto16(self.AllocSpace)}"
                 self.OutBody("call _exit wrt ..plt")
-            
+      
             else:
                 pass 
         if Sys_Os == "Windows":
@@ -301,12 +524,8 @@ class CodeGen:
                 Returning = self.Gen(Node.get("Return"))
                 self.EnsureFreeReg("rcx", 8)
             
-                self.OutBody("mov rsp, rbp")
-                self.OutBody("pop rbp")
-                self.Body[self.Loc] = self.Bi  * "\t" + f"sub rsp, {self.AllocSpace}"
-
-  
-            
+ 
+                self.OutBody(f"xor rcx, rcx") 
                 if self.InMainSize == "i64":
                     self.OutBody(f"mov rcx, {Returning}")
                 elif self.InMainSize == "i32":
@@ -315,6 +534,10 @@ class CodeGen:
                     self.OutBody(f"mov cx, {Returning}")
                 elif self.InMainSize == "i8":
                     self.OutBody(f"mov cl, {Returning}")
+                
+                self.OutBody("mov rsp, rbp")
+                self.OutBody("pop rbp")
+                self.Body[self.Loc] = self.Bi  * "\t" + f"sub rsp, {advanceto16(self.AllocSpace)}"
                 self.OutBody("call ExitProcess")
             
             else:
@@ -330,21 +553,45 @@ class CodeGen:
                 "Type" : Node.get("Type"),
                 "Size" : Node.get("Size"),
                 "Should_Load" : True,
+                "IsInt" : Getting.get("IsInt"),
+                "IsFloat" : Getting.get("IsFloat")
             }})
             #from json import dumps 
             #print(dumps(self.Temporay_Vars, indent=4))  
             return Getting.get("Register")
         else:
-            reg = self.GetReg(Node.get("Size"))
-            self.OutBody(f"mov {reg}, {Getting.get("Register")}")
-            self.Temporay_Vars.update({NewName : {
-                "Register" : reg,
-                "Type" : Node.get("Size"),
-                "Size" : Node.get("Size"),
-                "Should_Load" : True
-            }})           
+            if Getting.get("IsFloat") == True:
+                reg = self.GetFlReg()
+                if Getting.get("Size") == "4":
+                    self.OutBody(f"movss {reg}, {Getting.get("Register")}")
+                elif Getting.get("Size") == "8":
+                    self.OutBody(f"movsd {reg}, {Getting.get("Register")}")
+                self.Temporay_Vars.update({NewName : {
+                    "Register" : reg,
+                    "Type" : Node.get("Type"),
+                    "Size" : Node.get("Size"),
+                    "Should_Load" : True,
+                    "IsInt" : True,
+                    "IsFloat" : False
+                
+                }})           
             
-            return reg 
+                return reg 
+            
+            elif Getting.get("IsInt") == True:
+                reg = self.GetReg(Node.get("Size"))
+                self.OutBody(f"mov {reg}, {Getting.get("Register")}")
+                self.Temporay_Vars.update({NewName : {
+                    "Register" : reg,
+                    "Type" : Node.get("Type"),
+                    "Size" : Node.get("Size"),
+                    "Should_Load" : True,
+                    "IsInt" : True,
+                    "IsFloat" : False
+                
+                }})           
+            
+                return reg 
         
     def CallVar(self, Node):
         Loaded_Var: dict = self.Temporay_Vars.get(Node.get("Name"))
@@ -353,17 +600,37 @@ class CodeGen:
             #print(self.UReg64, Node.get("Name"), "l")
             return Loaded_Var.get("Register")
 
-        elif Loaded_Var.get("Register", "")[0] == "[" and Loaded_Var.get("Should_Load") == True:
+        elif Loaded_Var.get("Register", "")[0] == "[" and Loaded_Var.get("Should_Load") == True and Loaded_Var.get("IsInt") == True:
             reg = self.GetReg(Loaded_Var.get("Size", ""))
             self.OutBody(f"mov {reg}, {Loaded_Var.get("Register")}")
             self.Temporay_Vars.update({Node.get("Name") : {
                 "Register" : reg,
                 "Type" : Node.get("Type"),
                 "Size" : Node.get("Size"),
-                "Should_Load" : True
+                "Should_Load" : True,
+                "IsInt" : True,
+                "IsFloat" : False
             }})
        
-            return reg
+            return reg 
+        elif Loaded_Var.get("Register", "")[0] == "[" and Loaded_Var.get("Should_Load") == True and Loaded_Var.get("IsFloat") == True:
+            reg = self.GetFlReg()
+            
+            if Loaded_Var.get("Size") == "4":
+                self.OutBody(f"movss {reg}, {Loaded_Var.get("Register")}")
+            elif Loaded_Var.get("Size") == 8:
+                self.OutBody(f"movsd {reg}, {Loaded_Var.get("Register")}")
+
+            self.Temporay_Vars.update({Node.get("Name") : {
+                "Register" : reg,
+                "Type" : Node.get("Type"),
+                "Size" : Node.get("Size"),
+                "Should_Load" : True,
+                "IsInt" : False,
+                "IsFloat" : True
+            }})
+       
+            return reg 
         else:
             return Loaded_Var.get("Register")
     
@@ -406,7 +673,9 @@ class CodeGen:
                 "Register" : f"[rbp-{self.AllocSpace}]",
                 "Type" : TempVar.get("Type"),
                 "Size" : TempVar.get("Size"),
-                "Should_Load" : TempVar.get("Should_Load")
+                "Should_Load" : TempVar.get("Should_Load"),
+                "IsInt" : True,
+                "IsFloat" : False
             }})
             
             return RegisterList[-1]
@@ -427,17 +696,24 @@ class CodeGen:
                         "Register" : Moved,
                         "Type" : TempVar.get("Type"),
                         "Size" : TempVar.get("Size"),
-                        "Should_Load" : TempVar.get("Should_Load")
+                        "Should_Load" : TempVar.get("Should_Load"),
+                        "IsInt" : True,
+                        "IsFloat" : False 
                     }})
 
             return reg
     
 
     def GenInt(self, Node):
+        self.IsInt = True
+        self.IsFloat = False 
 
         Reg = self.GetReg(self.NumSize)
         
-        self.OutBody(f"mov {Reg}, {Node.get("Value")}")
+        if int(Node.get("Value")) <= -2147483649 or int(Node.get("Value")) >= 4294967296:
+            self.OutBody(f"movabs {Reg}, {Node.get("Value")}")
+        else:
+            self.OutBody(f"mov {Reg}, {Node.get("Value")}")
         return Reg 
 
     def GenFunc(self, Node):
@@ -513,10 +789,15 @@ class CodeGen:
             "Register" : Val,
             "Type" : Node.get("Type"),
             "Size" : Node.get("Size"),
-            "Should_Load" : False
+            "Should_Load" : False,
+            "IsInt" : self.IsInt,
+            "IsFloat" : self.IsFloat,
         }})
        #print(self.UReg64[-1], Val, Node.get('Name'))
     def GenAdd(self, Node): 
+        self.IsInt = True
+        self.IsFloat = False
+
         self.NumSize = Node.get("Size")
 
         Op1 = self.Gen(Node.get("Op1"))
@@ -532,5 +813,5 @@ class CodeGen:
             self.Gen(self.Ast[self.Pos])
             self.Pos+=1
 
-        return '\n'.join(self.Headers) + "\n" + '\n'.join(self.Data) + "\n" +  '\n'.join(self.Extern) + "\n" +  '\n'.join(self.Text) + "\n" +  '\n'.join(self.Body)      
+        return '\n'.join(self.Headers) + "\n" + '\n'.join(self.RoData) + '\n' + '\n'.join(self.Data) + "\n" +  '\n'.join(self.Extern) + "\n" +  '\n'.join(self.Text) + "\n" +  '\n'.join(self.Body)      
 

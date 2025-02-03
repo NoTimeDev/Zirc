@@ -1,6 +1,5 @@
 import sys
 from Lexer.TokenKind import * 
-import copy
 
 class Parser:
     
@@ -44,11 +43,21 @@ class Parser:
             "Size" : "?",
             "Type" : ["i8", "i16", "i32", "i64"] 
         }
-        
+    
+    def ParseFloat(self) -> dict:
+        Num = self.Adv()
+
+        return {
+            "Kind" : "Float",
+            "Value" : Num.Value,
+            "Size" : "?",
+            "Type" : ["f32", "f64"]
+        }
+
     def ParseType(self) -> list[str]: 
         if self.CToken().Kind == TokenKind.Types:
             type_ = self.Adv()
-            if type_.Value in ["i8", "i16", "i32", "i64"]:
+            if type_.Value in ["f32", "f64", "i8", "i16", "i32", "i64"]:
                 return [type_.Value,]
         else: 
             tk = self.Adv()
@@ -65,21 +74,23 @@ class Parser:
     def GetSizeFromType(self, Type):
         return str(int(Type[1:]) // 8)
 
-    def ParseAdd(self) -> dict:
-        add = self.Adv()
+    def ParseArth(self) -> dict:
+        tk = self.Adv()
         
         Type = self.ParseType()
         
         Op1 = self.ParseCToken()
-        self.Expect(TokenKind.Comma, "';'")
+        self.Expect(TokenKind.Comma, "','")
         Op2 = self.ParseCToken()
             
         if self.cmptypes(Op1["Type"], Type) == False or self.cmptypes(Op2["Type"], Type) == False:
-            print(f"[{add.Line}:Error] {Type[0]} does not match with the type of an operand", file=sys.stderr)
+            print(f"[{tk.Line}:Error] {Type[0]} does not match with the type of an operand", file=sys.stderr)
             exit(1)
+        
+        Name = {TokenKind.Add : "Add-Inst", TokenKind.Fadd : "Fadd-Inst"}
 
         return {
-            "Kind" : "Add-Inst",
+            "Kind" : Name.get(tk.Kind),
             "Op1" : Op1,
             "Op2" : Op2,
             "Size" : self.GetSizeFromType(Type[0]),
@@ -211,60 +222,72 @@ class Parser:
                 "Comment" : self.Adv().Value 
             }
     
-    def ParseZext(self):
-        self.Adv()
-
-        Extending = self.Adv()
-        self.Expect(TokenKind.To, "'to' token")
-        Type = self.ParseType()
-        self.Expect(TokenKind.Pointarr, "'->'")
-        From = self.ParseType()
-
-        return {
-            "Kind" : "Zext-inst",
-            "Type" : Type, 
-            "Size" : "?",
-            "From" : From,
-            "Extending" : Extending.Value
-        }
-
-    def ParseSext(self):
-        self.Adv()
-
-        Extending = self.Adv()
-        self.Expect(TokenKind.To, "'to' token")
-        Type = self.ParseType()
-        self.Expect(TokenKind.Pointarr, "'->'")
-        From = self.ParseType()
-
-        return {
-            "Kind" : "Sext-inst",
-            "Type" : Type, 
-            "Size" : "?",
-            "From" : From,
-            "Extending" : Extending.Value
-        }
-    def ParseCToken(self) -> dict:
-        match self.CToken().Kind:
-            case TokenKind.Number:
-                return self.ParseNum()
-            case TokenKind.Add:
-                return self.ParseAdd()
-            case TokenKind.Variables:
-                return self.ParseVar()
-            case TokenKind.Load:
-                return self.LoadVar()
-            case TokenKind.Ret:
-                return self.ParseRet()
-            case TokenKind.Def:
-                return self.ParseDef()
-            case TokenKind.Meta_Data:
-                return self.ParseMeta()
-            case TokenKind.Sext:
-                return self.ParseSext()
-            case TokenKind.Zext:
-                return self.ParseZext()
  
-            case _: 
-                print(f"{self.Adv().Value} <- why is this here", file=sys.stderr)
-                exit(1)
+    def ParseScaleing(self):
+        tk = self.Adv()
+        Name = {TokenKind.Sext : "Sext-inst", TokenKind.Trunc : "Trunc-inst", TokenKind.Zext : "Zext-inst"}
+
+        Extending = self.Adv()
+        self.Expect(TokenKind.To, "'to' token")
+        Type = self.ParseType()
+        self.Expect(TokenKind.Pointarr, "'->'")
+        From = self.ParseType()
+
+        return {
+            "Kind" : Name.get(tk.Kind),
+            "Type" : Type, 
+            "Size" : "?",
+            "From" : From,
+            "Extending" : Extending.Value
+        }
+    
+    def FloatToInts(self):
+        tk = self.Adv()
+        
+        Name = {TokenKind.Ftui : "Fl-to-uint"}
+
+        From = self.ParseType()
+        self.Expect(TokenKind.To, "to keyword")
+        To = self.ParseType()
+        self.Expect(TokenKind.Comma, "','")
+
+        Ogfloat = self.Adv()
+        self.Expect(TokenKind.Pointarr, "'->'")
+        NewName = self.Adv()
+
+        return {
+            "Kind" : Name.get(tk.Kind),
+            "From" : From,
+            "Type" : To, 
+            "Size" : "?",
+            "OgName" : Ogfloat.Value,
+            "NewName" : NewName.Value,
+        }
+
+    def ParseCToken(self) -> dict:
+        CKind = self.CToken().Kind 
+        if CKind == TokenKind.Number:
+            return self.ParseNum()
+        elif CKind == TokenKind.Float:
+            return self.ParseFloat()
+        elif CKind in [TokenKind.Add, TokenKind.Fadd]:
+            return self.ParseArth()
+        elif CKind == TokenKind.Variables:
+            return self.ParseVar()
+        elif CKind == TokenKind.Load:
+            return self.LoadVar()
+        elif CKind == TokenKind.Ret:
+            return self.ParseRet()
+        elif CKind == TokenKind.Def:
+            return self.ParseDef()
+        elif CKind == TokenKind.Meta_Data:
+            return self.ParseMeta()
+        elif CKind in [TokenKind.Sext, TokenKind.Zext, TokenKind.Trunc]:
+            return self.ParseScaleing()
+        elif CKind in [TokenKind.Ftui]:
+            return self.FloatToInts()
+        elif CKind == _: 
+            print(f"{self.Adv().Value} <- why is this here", file=sys.stderr)
+            exit(1)
+
+

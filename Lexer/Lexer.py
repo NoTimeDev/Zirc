@@ -90,18 +90,35 @@ class Lexer:
 
                     Ap: dict[str, TokenKind] = {
                         "add" : TokenKind.Add,
+                        "fadd" : TokenKind.Fadd,
+
                         "ret" : TokenKind.Ret,
                         "def" : TokenKind.Def,
                         "load" : TokenKind.Load,
                         "to" : TokenKind.To,
+                        
+                        "fext" : TokenKind.Fext,
                         "sext" : TokenKind.Sext,
                         "zext" : TokenKind.Zext, 
+                        
+                        "ftrunc" : TokenKind.Ftrunc,
+                        "trunc" : TokenKind.Trunc,
 
+                        "uitf" : TokenKind.Uitf,
+                        "sitf" : TokenKind.Sitf,
+                        
+                        "ftui" : TokenKind.Ftui, 
+                        "ftsi" : TokenKind.Ftsi,
+                    
                         "i8" : TokenKind.Types,
                         "i16" : TokenKind.Types,
                         "i32" : TokenKind.Types,
                         "i64" : TokenKind.Types,
+
+                        "f32" : TokenKind.Types,
+                        "f64" : TokenKind.Types,
                     }
+
                     if String not in list(Ap.keys()):
                         print(f"{Line}:{Start} {String} is not a valid instruction",file=sys.stderr)
                         exit(1)

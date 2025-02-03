@@ -3,12 +3,25 @@ from enum import Enum, auto
 class TokenKind(Enum):
     #instructions
     Add = auto()
+    
+    Fadd = auto()
+
     Ret = auto()
     Def = auto()
     Load = auto()
     To = auto()
     Sext = auto()
     Zext = auto()
+    Trunc = auto()
+    
+    Ftui = auto()
+    Ftsi = auto()
+
+    Uitf = auto()
+    Sitf = auto()
+
+    Ftrunc = auto()
+    Fext = auto()
 
     #variables
     Meta_Data = auto()

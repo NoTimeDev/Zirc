@@ -19,7 +19,7 @@ Tokens: list[Token] = LexerClass.Lex()
 ParserClass: Parser = Parser(Tokens, LexerClass.Meta)
 Ast: list[dict] = ParserClass.Parse()
 
-# print(json.dumps(Ast, indent=4))
+#print(json.dumps(Ast, indent=4))
 
 CodeGenClass: CodeGen = CodeGen(Ast)
 AsmCode = CodeGenClass.GenAsm()
