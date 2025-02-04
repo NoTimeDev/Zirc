@@ -124,7 +124,7 @@ class CodeGen:
             case "Integer":
                 return self.GenInt(Node)
             case "asmcom":
-                self.Comment = f";{Node.get("Comment")}"
+                self.Comment = f";{Node.get('Comment')}"
             case "Call_Var":
                 return self.CallVar(Node)
             case "Load-inst":
@@ -144,7 +144,7 @@ class CodeGen:
             case "Fl-to-uint":
                 return self.GenFlToUint(Node) 
             case _:
-                print(f"I Dont Support {Node.get("Kind")}")
+                print(f"I Dont Support {Node.get('Kind')}")
 
     def GenFlToUint(self, Node):
         TempVar = self.Temporay_Vars.get(Node.get("OgName"))
@@ -154,7 +154,7 @@ class CodeGen:
 
             Reg = self.GetReg("8")
 
-            self.OutBody(f"cvttss2si {Reg}, {TempVar["Register"]}")
+            self.OutBody(f'cvttss2si {Reg}, {TempVar["Register"]}')
             
             self.GiveFlReg(TempVar["Register"])
             RegInfo = self.GetPosMap(Reg)
@@ -173,9 +173,9 @@ class CodeGen:
             fReg = self.GetFlReg()
 
             if Node.get("Size") == "4":
-                self.OutBody(f"movss {fReg}, {TempVar.get("Register")}")
+                self.OutBody(f'movss {fReg}, {TempVar.get("Register")}')
             elif Node.get("Size") == "8":
-                self.OutBody(f"movsd {fReg}, {TempVar.get("Register")}")
+                self.OutBody(f'movsd {fReg}, {TempVar.get("Register")}')
 
             Reg = self.GetReg("8")
 
@@ -273,11 +273,11 @@ class CodeGen:
         reg = self.GetFlReg()
 
         if self.FloatSize == "f64":
-            self.OutRData(f"fl{self.floatcount} dq {Node.get("Value")}")
+            self.OutRData(f'fl{self.floatcount} dq {Node.get("Value")}')
             self.OutBody(f"movsd {reg}, [fl{self.floatcount}]")
             self.floatcount+=1 
         elif self.FloatSize == "f32":
-            self.OutRData(f"fl{self.floatcount} dd {Node.get("Value")}")
+            self.OutRData(f'fl{self.floatcount} dd {Node.get("Value")}')
             self.OutBody(f"movss {reg}, [fl{self.floatcount}]")
             self.floatcount+=1
 
@@ -318,7 +318,7 @@ class CodeGen:
             RegInfo = self.GetPosMap(Reg)
             
 
-            self.OutBody(f"mov {Reg}, {TempVar.get("Register")}")
+            self.OutBody(f'mov {Reg}, {TempVar.get("Register")}')
             self.Temporay_Vars.update({Node.get("Extending"): {
                 "Register" :  RegInfo[poses[Node.get("Type")[0]]],
                 "Type" : Node.get("Type"),
@@ -357,9 +357,9 @@ class CodeGen:
             
             ExtendingReg = RegInfo[poses.get(Node.get("Type")[0])]
             if Node.get("Type")[0] == "i64" and Node.get("From")[0] == "i32" or Node.get("Type")[0] == "i32" and Node.get("From")[0] == "i64":
-                self.OutBody(f"movsxd {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
+                self.OutBody(f'movsxd {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}')
             else:
-                self.OutBody(f"movsx {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
+                self.OutBody(f'movsx {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}')
 
             self.Temporay_Vars.update({Node.get("Extending"): {
                 "Register" : ExtendingReg,
@@ -374,9 +374,9 @@ class CodeGen:
         
 
             if Node.get("Type")[0] == "i64" and Node.get("From")[0] == "i32" or Node.get("Type")[0] == "i32" and Node.get("From")[0] == "i64":
-                self.OutBody(f"movsxd {Reg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
+                self.OutBody(f'movsxd {Reg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}')
             else:
-                self.OutBody(f"movsx {Reg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
+                self.OutBody(f'movsx {Reg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}')
 
             self.Temporay_Vars.update({Node.get("Extending"): {
                 "Register" : Reg,
@@ -397,10 +397,10 @@ class CodeGen:
             ExtendingReg = RegInfo[poses.get(Node.get("Type")[0])]
             if Node.get("Type")[0] == "i64" and Node.get("From")[0] == "i32" or Node.get("Type")[0] == "i32" and Node.get("From")[0] == "i64":
                 self.OutBody(f"xor {ExtendingReg}, {ExtendingReg}")
-                self.OutBody(f"mov {RegInfo[poses.get(Node.get("From"))]}, {TempVar["Register"]}")
+                self.OutBody(f'mov {RegInfo[poses.get(Node.get("From"))]}, {TempVar["Register"]}')
                 self.OutBody(f"mov {ExtendingReg}, {ExtendingReg}")
             else:
-                self.OutBody(f"movzx {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
+                self.OutBody(f'movzx {ExtendingReg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}')
 
             self.Temporay_Vars.update({Node.get("Extending"): {
                 "Register" : ExtendingReg,
@@ -418,9 +418,9 @@ class CodeGen:
             print(RegInfo)
 
             if Node.get("Type")[0] == "i64" and Node.get("From")[0] == "i32" or Node.get("Type")[0] == "i32" and Node.get("From")[0] == "i64":
-                self.OutBody(f"mov {Reg}, {TempVar["Register"]}")
+                self.OutBody(f'mov {Reg}, {TempVar["Register"]}')
             else:
-                self.OutBody(f"movzx {Reg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}")
+                self.OutBody(f'movzx {Reg}, {self.MapTypeToSize[Node.get("From")[0]]} {TempVar["Register"]}')
 
             self.Temporay_Vars.update({Node.get("Extending"): {
                 "Register" : Reg,
@@ -483,13 +483,7 @@ class CodeGen:
 
     def GenRet(self, Node):
         if Sys_Os == "Linux":
-            if self.InMain == True:
-                if "_exit" not in self.ExternalFunc:
-                    self.ExternalFunc.append("_exit")
-                    Com = self.Comment 
-                    self.OutExtern(f"extern _exit")
-                    self.Comment = Com
-            
+            if self.InMain == True:   
                 self.NumSize = self.RetSizeForType(self.InMainSize)
                 Returning = self.Gen(Node.get("Return"))
                 self.EnsureFreeReg("rdi", 8)
@@ -504,11 +498,12 @@ class CodeGen:
                     self.OutBody(f"mov di, {Returning}")
                 elif self.InMainSize == "i8":
                     self.OutBody(f"mov dil, {Returning}")
-        
+                 
                 self.OutBody("mov rsp, rbp")
                 self.OutBody("pop rbp")
                 self.Body[self.Loc] = self.Bi  * "\t" + f"sub rsp, {advanceto16(self.AllocSpace)}"
-                self.OutBody("call _exit wrt ..plt")
+                self.OutBody("mov rax, 60")
+                self.OutBody("syscall")
       
             else:
                 pass 
@@ -563,9 +558,9 @@ class CodeGen:
             if Getting.get("IsFloat") == True:
                 reg = self.GetFlReg()
                 if Getting.get("Size") == "4":
-                    self.OutBody(f"movss {reg}, {Getting.get("Register")}")
+                    self.OutBody(f'movss {reg}, {Getting.get("Register")}')
                 elif Getting.get("Size") == "8":
-                    self.OutBody(f"movsd {reg}, {Getting.get("Register")}")
+                    self.OutBody(f'movsd {reg}, {Getting.get("Register")}')
                 self.Temporay_Vars.update({NewName : {
                     "Register" : reg,
                     "Type" : Node.get("Type"),
@@ -580,7 +575,7 @@ class CodeGen:
             
             elif Getting.get("IsInt") == True:
                 reg = self.GetReg(Node.get("Size"))
-                self.OutBody(f"mov {reg}, {Getting.get("Register")}")
+                self.OutBody(f'mov {reg}, {Getting.get("Register")}')
                 self.Temporay_Vars.update({NewName : {
                     "Register" : reg,
                     "Type" : Node.get("Type"),
@@ -602,7 +597,7 @@ class CodeGen:
 
         elif Loaded_Var.get("Register", "")[0] == "[" and Loaded_Var.get("Should_Load") == True and Loaded_Var.get("IsInt") == True:
             reg = self.GetReg(Loaded_Var.get("Size", ""))
-            self.OutBody(f"mov {reg}, {Loaded_Var.get("Register")}")
+            self.OutBody(f'mov {reg}, {Loaded_Var.get("Register")}')
             self.Temporay_Vars.update({Node.get("Name") : {
                 "Register" : reg,
                 "Type" : Node.get("Type"),
@@ -617,9 +612,9 @@ class CodeGen:
             reg = self.GetFlReg()
             
             if Loaded_Var.get("Size") == "4":
-                self.OutBody(f"movss {reg}, {Loaded_Var.get("Register")}")
+                self.OutBody(f'movss {reg}, {Loaded_Var.get("Register")}')
             elif Loaded_Var.get("Size") == 8:
-                self.OutBody(f"movsd {reg}, {Loaded_Var.get("Register")}")
+                self.OutBody(f'movsd {reg}, {Loaded_Var.get("Register")}')
 
             self.Temporay_Vars.update({Node.get("Name") : {
                 "Register" : reg,
@@ -711,18 +706,18 @@ class CodeGen:
         Reg = self.GetReg(self.NumSize)
         
         if int(Node.get("Value")) <= -2147483649 or int(Node.get("Value")) >= 4294967296:
-            self.OutBody(f"movabs {Reg}, {Node.get("Value")}")
+            self.OutBody(f'movabs {Reg}, {Node.get("Value")}')
         else:
-            self.OutBody(f"mov {Reg}, {Node.get("Value")}")
+            self.OutBody(f'mov {Reg}, {Node.get("Value")}')
         return Reg 
 
     def GenFunc(self, Node):
-        self.OutBody(f"{Node.get("Name")[1:]}:")
+        self.OutBody(f'{Node.get("Name")[1:]}:')
         if Node.get("Name") == "@main":
             self.InMain = True
             self.InMainSize = Node.get("Type")[0]
         self.Ti+=1
-        self.OutText(f"global {Node.get("Name")[1:]}")
+        self.OutText(f'global {Node.get("Name")[1:]}')
         self.Ti-=1
         
         self.Bi+=1

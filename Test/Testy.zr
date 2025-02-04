@@ -3,7 +3,7 @@ def @main() : i32 {
     #$1 = fadd f32 2.3, 4.5
     #ftui f32 to i32, $1 -> $f1  
     #ftsi f32 to i64, $1 -> $f2 
-
+    
     #$2 =  add i32 3, 4 
     #uitf i32 to f32, $2 -> $f3 
     #sitf i32 to f32, $2 -> $f4   
@@ -14,7 +14,7 @@ def @main() : i32 {
     #fext $4 to f64 -> f32  
 
     $1 = fadd f32 4.5, 5.5
-    ftui f32 to i32, $1 -> $f1
+    ftsi f32 to i32, $1 -> $f2 
 
     load i32, $f1 -> $lf1 
     ret $lf1
