@@ -1,71 +1,62 @@
-#This Script Can Be Uses To Turn Main.py into an excutable
-
-import subprocess
+import os
 import platform
+import subprocess
 import sys
 import shutil
-import os
 
-if platform.system() == "Windows":
-
-    try:
-        res = subprocess.run(["pyinstaller"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    except FileNotFoundError:
-        result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.returncode != 0:
-            print("pip may not be installed", file=sys.stderr)
-            exit(1)
-    
-        stdout_output = result.stdout
-        stderr_output = result.stderr
-    
-        print("Rerun the installer")
-     
-    else:
-        res1 = subprocess.run(["pyinstaller", "--onefile", "Main.py", "--name", "zirc"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if res.returncode == 1:
-            print("Something went wrong")
-            exit(1)
-        else:
-            src = "./dist/zirc"
-            dest = "."
-            shutil.move(src, dest)
-            shutil.rmtree("./dist")
-            shutil.rmtree("./build")
-            os.remove("./zirc.spec")
-            exit(0)
+if platform.system() == "Linux":
+    print("Getting pyinstaller..")
+    result = subprocess.run(["pip3", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
         
 
-elif platform.system() == "Linux":
-    pipm = input("Enter the name of your pip(eg pip-3, pip, python-pip-3): ")
-    try:
-        res = subprocess.run(["pyinstaller"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    except FileNotFoundError:
-        result = subprocess.run([pipm, "install", "pyinstaller", "--break-system-packages"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if result.returncode != 0:
-            print("pip may not be installed", file=sys.stderr)
-            exit(1)
+    print("Building Main.py")
+    result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
     
-        stdout_output = result.stdout
-        stderr_output = result.stderr
     
-        print("Rerun the installer")
-     
-    else:
-        res1 = subprocess.run(["pyinstaller", "--onefile", "Main.py", "--name", "zirc"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        if res.returncode == 1:
-            print("Something went wrong")
-            exit(1)
-        else: 
-            src = "./dist/zirc"
-            dest = "."
-            shutil.move(src, dest)
-            shutil.rmtree("./dist")
-            shutil.rmtree("./build")
-            os.remove("./zirc.spec")
-            exit(0)
+    print("Adding zirc to bin")
+    shutil.move("./dist/zirc", "/usr/local/bin/zirc")
+    
+    
+    shutil.rmtree("./dist")
+    shutil.rmtree("./build")
+    os.remove("./zirc.spec")
+
+elif platform.system() == "Windows":
+    print("Getting pyinstaller..")
+    result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
         
 
-   
+    print("Building Main.py")
+    result = subprocess.run(["python", "-m", "pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
+    
+    
+    print("Adding zirc to path")
+    if os.path.isdir(r"C:\Zedcomp") == False:
+        os.mkdir(r"C:\Zedcomp")
 
+    shutil.move(r".\dist\zirc", r"C:\Zedcomp")
 
+    import winreg as reg
+
+    new_path = r"C:\Zedcomp"
+
+    key = reg.HKEY_CURRENT_USER 
+    path_value_name = "Environment"
+    path_name = "Path"  
+    
+    with reg.OpenKey(key, r"Environment", 0, reg.KEY_WRITE) as registry_key:
+        current_path, _ = reg.QueryValueEx(registry_key, path_name)
+
+        if new_path not in current_path:
+            new_path_value = current_path + ";" + new_path
+
+            reg.SetValueEx(registry_key, path_name, 0, reg.REG_EXPAND_SZ, new_path_value)
+
+    
+    shutil.rmtree(r".\dist")
+    shutil.rmtree(r".\build")
+    os.remove(r".\zirc.spec")
+
+else:
+    print("Unsupported OS", file=sys.stderr)
+    exit(1)
