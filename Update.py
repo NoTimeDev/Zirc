@@ -33,8 +33,10 @@ def Update(Ver: str):
         IsNewVer = NewVer[:-1] != Ver
         
         if IsNewVer == True:
-            subprocess.run(["sudo", "python3", "Build.py"])
-
+            if platform.system() == "Linux":
+                subprocess.run(["python3", "Build.py"])
+            elif platform.system() == "Windows":
+                subprocess.run(["python", "Build.py"])
         os.chdir("..")
         shutil.rmtree("./Zirc")
         

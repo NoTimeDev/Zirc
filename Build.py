@@ -27,32 +27,14 @@ elif platform.system() == "Windows":
         
 
     print("Building Main.py")
-    result = subprocess.run(["python", "-m", "pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
+    result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
     
     
-    print("Adding zirc to path")
     if os.path.isdir(r"C:\Zedcomp") == False:
         os.mkdir(r"C:\Zedcomp")
 
-    shutil.move(r".\dist\zirc", r"C:\Zedcomp")
-
-    import winreg as reg
-
-    new_path = r"C:\Zedcomp"
-
-    key = reg.HKEY_CURRENT_USER 
-    path_value_name = "Environment"
-    path_name = "Path"  
-    
-    with reg.OpenKey(key, r"Environment", 0, reg.KEY_WRITE) as registry_key:
-        current_path, _ = reg.QueryValueEx(registry_key, path_name)
-
-        if new_path not in current_path:
-            new_path_value = current_path + ";" + new_path
-
-            reg.SetValueEx(registry_key, path_name, 0, reg.REG_EXPAND_SZ, new_path_value)
-
-    
+    shutil.move(r".\dist\zirc.exe", r"C:\Zedcomp\zirc.exe")    
+        
     shutil.rmtree(r".\dist")
     shutil.rmtree(r".\build")
     os.remove(r".\zirc.spec")
