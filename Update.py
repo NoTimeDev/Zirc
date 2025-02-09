@@ -44,3 +44,5 @@ def Update(Ver):
             shutil.rmtree("./Zirc")
         else:
             print("Latest version of zirc")
+            os.chdir("..")
+            shutil.rmtree("./Zirc")
