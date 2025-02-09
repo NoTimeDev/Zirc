@@ -6,7 +6,7 @@ import shutil
 import os
 
 import psutil
-
+print("l")
 for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
     if proc.info['name'] == 'python.exe' and proc.info['cmdline'] and proc.info['cmdline'][1] == 'Build.py':
         proc.terminate()
