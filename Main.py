@@ -3,13 +3,15 @@ import json
 from Lexer.Lexer import *
 from Update import *
 import os
+import subprocess
 
 #Info-------
-ZircVer: str = "0.1"
+ZircVer: str = "0.2"
 
 #------------
 
 def main(argc: int = sys.argv.__len__(), argv: list[str] = sys.argv):
+        
     File = argv[1:2]
 
     if File == []:
@@ -30,6 +32,9 @@ def main(argc: int = sys.argv.__len__(), argv: list[str] = sys.argv):
         print(ZircVer)        
         sys.exit(0)
     
+    elif File[0] == "--update":
+        Update(ZircVer)
+
     elif File[0] == "--t":
         print("Test Work")
         sys.exit(0)

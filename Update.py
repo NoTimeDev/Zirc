@@ -4,8 +4,7 @@ import os
 import platform
 import shutil
 
-def Update(): 
-    Ver = "0.2"
+def Update(Ver): 
 
     try:
         subprocess.run(["git"], capture_output=True, text=True)     
@@ -39,9 +38,7 @@ def Update():
                 subprocess.run(["python3", "Build.py"])
             elif platform.system() == "Windows":
                 subprocess.run(["python", "Build.py"])
+            os.chdir("..")
+            shutil.rmtree("./Zirc")
         else:
             print("Latest version of zirc")
-        os.chdir("..")
-        shutil.rmtree("./Zirc")
-        
-Update()

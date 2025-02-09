@@ -21,22 +21,12 @@ if platform.system() == "Linux":
     shutil.rmtree("./build")
     os.remove("./zirc.spec")
 
-    print("Building Update.py")
-    result = subprocess.run(["pyinstaller",  "--onefile", "Update.py", "-n", "zircupd"], capture_output=True, text=True)
-    
-    
-    print("Adding zirc to bin")
-    shutil.move("./dist/zircupd", "/usr/local/bin/zircupd")
-    
-    
-    shutil.rmtree("./dist")
-    shutil.rmtree("./build")
-    os.remove("./zircupd.spec")
-
 elif platform.system() == "Windows":
+    import time
+
     print("Getting pyinstaller..")
     result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
-        
+    subprocess.run(["pip", "install", "psutil"])
 
     print("Building Main.py")
     result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
@@ -44,23 +34,11 @@ elif platform.system() == "Windows":
     if os.path.isdir(r"C:\Zedcomp") == False:
         os.mkdir(r"C:\Zedcomp")
 
-    shutil.move(r".\dist\zirc.exe", r"C:\Zedcomp\zirc.exe")    
-        
-    shutil.rmtree(r".\dist")
-    shutil.rmtree(r".\build")
-    os.remove(r".\zirc.spec")
 
-    print("Building Update.py")
-    result = subprocess.run(["pyinstaller",  "--onefile", "Update.py", "-n", "zircupd"], capture_output=True, text=True)
+    subprocess.Popen([sys.executable, "Buildfn.py"])
+    while True:
+        pass 
 
-    if os.path.isdir(r"C:\Zedcomp") == False:
-        os.mkdir(r"C:\Zedcomp")
-
-    shutil.move(r".\dist\zircupd.exe", r"C:\Zedcomp\zircupd.exe")    
-        
-    shutil.rmtree(r".\dist")
-    shutil.rmtree(r".\build")
-    os.remove(r".\zircupd.spec")
 else:
     print("Unsupported OS", file=sys.stderr)
     exit(1)
