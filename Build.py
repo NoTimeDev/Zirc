@@ -36,8 +36,8 @@ elif platform.system() == "Windows":
 
 
     subprocess.Popen([sys.executable, "Buildfn.py"])
-    while True:
-        pass 
+    time.sleep(3)
+    os._exit(0)
 
 else:
     print("Unsupported OS", file=sys.stderr)

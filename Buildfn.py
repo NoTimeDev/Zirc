@@ -5,22 +5,20 @@ import time
 import shutil
 import os
 
-for proc in psutil.process_iter():
-    try:
-        if proc.name == "python.exe" and "Build.py" in proc.cmdline():
-            proc.kill()
+import psutil
 
-            time.sleep(2)
-                
-            shutil.move(r".\dist\zirc.exe", r"C:\Zedcomp\zirc.exe")    
+for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+    if proc.info['name'] == 'python.exe' and proc.info['cmdline'] and proc.info['cmdline'][1] == 'build.py':
+        proc.terminate()
+        print(f"Terminated process with PID {proc.info['pid']}")
+
+
+        shutil.move(r".\dist\zirc.exe", r"C:\Zedcomp\zirc.exe")    
         
-            shutil.rmtree(r".\dist")
-            shutil.rmtree(r".\build")
-            os.remove(r".\zirc.spec")
+        shutil.rmtree(r".\dist")
+        shutil.rmtree(r".\build")
+        os.remove(r".\zirc.spec")
 
-            if os.getcwd()[1:] == ":/Zirc":
-                os.chdir("..")
-                shutil.rmtree("./Zirc")
-
-    except:
-        continue
+        if os.getcwd()[1:] == ":/Zirc":
+            os.chdir("..")
+            shutil.rmtree("./Zirc")
