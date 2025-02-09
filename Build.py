@@ -32,7 +32,7 @@ if platform.system() == "Linux":
     shutil.rmtree("./dist")
     shutil.rmtree("./build")
     os.remove("./zircupd.spec")
-    
+
 elif platform.system() == "Windows":
     print("Getting pyinstaller..")
     result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
@@ -51,7 +51,7 @@ elif platform.system() == "Windows":
     os.remove(r".\zirc.spec")
 
     print("Building Update.py")
-    result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zircupd"], capture_output=True, text=True)
+    result = subprocess.run(["pyinstaller",  "--onefile", "Update.py", "-n", "zircupd"], capture_output=True, text=True)
 
     if os.path.isdir(r"C:\Zedcomp") == False:
         os.mkdir(r"C:\Zedcomp")
