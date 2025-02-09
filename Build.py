@@ -23,7 +23,8 @@ if platform.system() == "Linux":
 
 elif platform.system() == "Windows":
     import time
-
+    drive = os.getcwd()[:os.getcwd().find(":")]
+    
     print("Getting pyinstaller..")
     result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
     subprocess.run(["pip", "install", "psutil"])
@@ -31,8 +32,8 @@ elif platform.system() == "Windows":
     print("Building Main.py")
     result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
 
-    if os.path.isdir(r"C:\Zedcomp") == False:
-        os.mkdir(r"C:\Zedcomp")
+    if os.path.isdir(drive + r":\Zedcomp") == False:
+        os.mkdir(drive + r":\Zedcomp")
 
 
     subprocess.Popen([sys.executable, "Buildfn.py"])

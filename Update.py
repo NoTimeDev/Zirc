@@ -18,14 +18,16 @@ def Update(Ver):
         if platform.system() == "Linux":
             os.chdir(os.path.expanduser("~"))
         elif platform.system() == "Windows":
-            os.chdir("C:/")
+            drive = os.getcwd()[:os.getcwd().find(":")]
+            os.chdir(drive + ":/")
 
         fet = subprocess.run(["git", "clone", "https://github.com/NoTimeDev/Zirc"], capture_output=True, text=True)
 
         if platform.system() == "Linux":
             os.chdir(os.path.expanduser("~/Zirc"))
         elif platform.system() == "Windows":
-            os.chdir("C:/Zirc")
+            drive = os.getcwd()[:os.getcwd().find(":")]
+            os.chdir(drive + ":/Zirc")
         
         with open("LV.txt", "r") as File:
             NewVer = File.read()
