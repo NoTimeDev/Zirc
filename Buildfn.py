@@ -8,10 +8,8 @@ import os
 import psutil
 
 for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-    if proc.info['name'] == 'python.exe' and proc.info['cmdline'] and proc.info['cmdline'][1] == 'build.py':
+    if proc.info['name'] == 'python.exe' and proc.info['cmdline'] and proc.info['cmdline'][1] == 'Build.py':
         proc.terminate()
-        print(f"Terminated process with PID {proc.info['pid']}")
-
 
         shutil.move(r".\dist\zirc.exe", r"C:\Zedcomp\zirc.exe")    
         
@@ -22,3 +20,5 @@ for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         if os.getcwd()[1:] == ":/Zirc":
             os.chdir("..")
             shutil.rmtree("./Zirc")
+
+        os._exit(1)
