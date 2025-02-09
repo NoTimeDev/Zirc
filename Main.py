@@ -30,9 +30,9 @@ def main(argc: int = sys.argv.__len__(), argv: list[str] = sys.argv):
         print(ZircVer)        
         sys.exit(0)
     
-    # elif File[0] == "--t":
-    #     print("Test Work")
-    #     sys.exit(0)
+    elif File[0] == "--t":
+        print("Test Work")
+        sys.exit(0)
     
 
     

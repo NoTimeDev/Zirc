@@ -5,7 +5,7 @@ import platform
 import shutil
 
 def Update(): 
-    Ver = "0.1"
+    Ver = "0.2"
 
     try:
         subprocess.run(["git"], capture_output=True, text=True)     
