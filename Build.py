@@ -27,7 +27,7 @@ elif platform.system() == "Windows":
     
     print("Getting pyinstaller..")
     result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
-    subprocess.run(["pip", "install", "psutil"])
+    subprocess.run(["pip", "install", "psutil"], capture_output=True, text=True)
 
     print("Building Main.py")
     result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
