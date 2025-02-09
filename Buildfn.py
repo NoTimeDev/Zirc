@@ -17,8 +17,17 @@ for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         shutil.rmtree(r".\build")
         os.remove(r".\zirc.spec")
 
-        if os.getcwd()[1:] == ":/Zirc":
-            os.chdir("..")
-            shutil.rmtree("./Zirc")
+        os._exit(1)
+    elif proc.info['name'] == 'python.exe' and proc.info['cmdline'] and proc.info['cmdline'][1] == 'Update.py':
+        proc.terminate()
+
+        shutil.move(r".\dist\zirc.exe", r"C:\Zedcomp\zirc.exe")    
+        
+        shutil.rmtree(r".\dist")
+        shutil.rmtree(r".\build")
+        os.remove(r".\zirc.spec")
+
+        os.chdir("..")
+        shutil.rmtree("./Zirc")
 
         os._exit(1)
