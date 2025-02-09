@@ -26,9 +26,6 @@ def main(argc: int = sys.argv.__len__(), argv: list[str] = sys.argv):
         print("     -link=<file>         adds a libary to links with")
         sys.exit(0)
 
-    elif File[0] == "--update":
-       Update(ZircVer)
-    
     elif File[0] == "--v":
         print(ZircVer)        
         sys.exit(0)
@@ -36,6 +33,7 @@ def main(argc: int = sys.argv.__len__(), argv: list[str] = sys.argv):
     elif File[0] == "--t":
         print("Test Work")
         sys.exit(0)
+    
 
     
 if __name__ == '__main__':

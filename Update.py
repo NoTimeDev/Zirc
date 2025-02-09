@@ -4,7 +4,9 @@ import os
 import platform
 import shutil
 
-def Update(Ver: str): 
+def Update(): 
+    Ver = "0.1"
+    
     try:
         subprocess.run(["git"], capture_output=True, text=True)     
     except FileNotFoundError:
