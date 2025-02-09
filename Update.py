@@ -6,7 +6,7 @@ import shutil
 
 def Update(): 
     Ver = "0.1"
-    
+
     try:
         subprocess.run(["git"], capture_output=True, text=True)     
     except FileNotFoundError:
@@ -39,6 +39,9 @@ def Update():
                 subprocess.run(["python3", "Build.py"])
             elif platform.system() == "Windows":
                 subprocess.run(["python", "Build.py"])
+        else:
+            print("Latest version of zirc")
         os.chdir("..")
         shutil.rmtree("./Zirc")
         
+Update()
