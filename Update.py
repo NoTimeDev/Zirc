@@ -33,8 +33,8 @@ def Update(Ver):
             NewVer = File.read()
 
 
-        IsNewVer = NewVer[:-1] != Ver
-        
+        IsNewVer = NewVer != Ver
+
         if IsNewVer == True:
             if platform.system() == "Linux":
                 subprocess.run(["python3", "Build.py"])
@@ -43,6 +43,6 @@ def Update(Ver):
             os.chdir("..")
             shutil.rmtree("./Zirc")
         else:
-            print("Latest version of zirc")
+            print(f"On the latest version of zirc verison {Ver}")
             os.chdir("..")
             shutil.rmtree("./Zirc")

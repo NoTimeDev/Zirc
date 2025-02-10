@@ -1,0 +1,28 @@
+?.debug compunit {"Producer" : "Zirc V1-0, Zed V1-0", "Lang" : 90,}
+?.debug file {"name" : "Test/Main.zr", "val" : 1,}
+?file "Main.zr"
+
+?.debug mark "1" 1 8 0 #file #line #col 
+?.debug mark "2" 1 9 0 
+
+def @main(): i32 {     
+    ?.m "1"
+
+    ?.m "2" ret 3 
+}
+
+?.debug func {
+    "symbol" : "@main", 
+    "name" : "main",
+    "file" : 1, 
+    "line" : 1, 
+    "col" : 5, 
+    
+    "external" : 1,
+    "type" : "i32",
+
+    "void" : "False",
+    "params" : "False",
+
+    "ret" : "i32",
+}

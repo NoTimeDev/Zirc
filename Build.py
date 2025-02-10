@@ -5,13 +5,11 @@ import sys
 import shutil
 
 if platform.system() == "Linux":
-    print("Getting pyinstaller..")
+    print("Getting pyinstaller..")    
     result = subprocess.run(["pip3", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
-        
 
     print("Building Main.py")
     result = subprocess.run(["pyinstaller",  "--onefile", "Main.py", "-n", "zirc"], capture_output=True, text=True)
-    
     
     print("Adding zirc to bin")
     shutil.move("./dist/zirc", "/usr/local/bin/zirc")
@@ -26,7 +24,7 @@ elif platform.system() == "Windows":
     drive = os.getcwd()[:os.getcwd().find(":")]
     
     print("Getting pyinstaller..")
-    result = subprocess.run(["pip", "install", "pyinstaller", "--break-system-packages"], capture_output=True, text=True)
+    result = subprocess.run(["pip", "install", "pyinstaller"], capture_output=True, text=True)
     subprocess.run(["pip", "install", "psutil"], capture_output=True, text=True)
 
     print("Building Main.py")

@@ -1,6 +1,18 @@
 from enum import Enum, auto 
 
 class TokenKind(Enum):
+    #Macs
+    private = auto()
+    public = auto()
+    cdelc = auto()
+    stdcall = auto()
+    
+    #debug 
+    CompilationUnit = auto()
+    File = auto()
+    Func = auto()
+    Mark = auto()
+
     #instructions
     Add = auto()
     
